@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: grafana
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /data/grafana
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+spec:
+  type: ClusterIP
+  selector:
+    app: grafana
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      volumes:
+      - name: grafana-vol
+        persistentVolumeClaim:
+          claimName: grafana
+      containers:
+      - image: grafana/grafana:7.2.0-ubuntu
+        name: grafana
+        volumeMounts:
+        - name: grafana-vol
+          mountPath: /var/lib/grafana
+      initContainers:
+      - image: grafana/grafana:7.2.0-ubuntu
+        name: grafana-init-container
+        command: ["sh", "-c", "chown -R 472:472 /var/lib/grafana"]
+        volumeMounts:
+        - mountPath: "/var/lib/grafana"
+          name: grafana-vol
+          readOnly: false
+        securityContext:
+          runAsUser: 0

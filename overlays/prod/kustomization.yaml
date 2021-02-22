@@ -1,0 +1,6 @@
+namePrefix: prod-
+namespace: default
+commonLabels:
+  environment: prod
+bases:
+- ../../base

@@ -1,0 +1,6 @@
+namePrefix: qa-
+namespace: default
+commonLabels:
+  environment: qa
+bases:
+- ../../base
